@@ -4,6 +4,7 @@
 2D Controller Class to be used for the CARLA waypoint follower demo.
 """
 
+from pygame import K_p
 import cutils
 import numpy as np
 
@@ -114,7 +115,8 @@ class Controller2D(object):
             throttle_output = 0.5 * self.vars.v_previous
         """
         self.vars.create_var('v_previous', 0.0)
-
+        self.vars.create_var('t_previous', 0.0)
+        self.vars.create_var()
         # Skip the first frame to store previous values properly
         if self._start_control_loop:
             """
@@ -158,13 +160,28 @@ class Controller2D(object):
                 Implement a longitudinal controller here. Remember that you can
                 access the persistent variables declared above here. For
                 example, can treat self.vars.v_previous like a "global variable".
-            """
             
+            """
+            # Kp , Ki , KD gains tune this paramter first 
+            kp = 0.0  
+            ki = 0.0 
+            kd = 0.0 
+
             # Change these outputs with the longitudinal controller. Note that
             # brake_output is optional and is not required to pass the
             # assignment, as the car will naturally slow down over time.
             throttle_output = 0
             brake_output    = 0
+            
+            # delta of the velocity 
+            delta_v = v_desired - v 
+            # delta of the time (Sample time)
+            delta_t = t - self.vars.t_previous
+            
+            #Calcaulate 
+            P_control = kp * delta_v 
+            I_control = ki * delta_v * delta_t 
+            D_control = kd * delta_v / delta_t
 
             ######################################################
             ######################################################
@@ -198,3 +215,4 @@ class Controller2D(object):
             in the next iteration)
         """
         self.vars.v_previous = v  # Store forward speed to be used in next step
+        self.vars.t_previous = t 
