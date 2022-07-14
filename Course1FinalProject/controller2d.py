@@ -4,6 +4,7 @@
 2D Controller Class to be used for the CARLA waypoint follower demo.
 """
 
+from tkinter import E
 from pygame import K_p
 import cutils
 import numpy as np
@@ -116,7 +117,13 @@ class Controller2D(object):
         """
         self.vars.create_var('v_previous', 0.0)
         self.vars.create_var('t_previous', 0.0)
-        self.vars.create_var()
+        # self.vars.create_var('I', 0.0)
+        self.vars.create_var('e_previous', 0.0)
+
+        kp = 1.5  
+        ki = 1.5 
+        kd = 0.2 
+
         # Skip the first frame to store previous values properly
         if self._start_control_loop:
             """
@@ -163,26 +170,30 @@ class Controller2D(object):
             
             """
             # Kp , Ki , KD gains tune this paramter first 
-            kp = 0.0  
-            ki = 0.0 
-            kd = 0.0 
 
             # Change these outputs with the longitudinal controller. Note that
             # brake_output is optional and is not required to pass the
             # assignment, as the car will naturally slow down over time.
-            throttle_output = 0
-            brake_output    = 0
+
             
             # delta of the velocity 
-            delta_v = v_desired - v 
+            e = v_desired - v 
             # delta of the time (Sample time)
             delta_t = t - self.vars.t_previous
             
-            #Calcaulate 
-            P_control = kp * delta_v 
-            I_control = ki * delta_v * delta_t 
-            D_control = kd * delta_v / delta_t
+            I = self.vars.e_previous + e *delta_t
+             
+            #Calcaulate PID gain 
+            P_control = kp * e
 
+            I_control = ki * I  
+            
+            D_control = kd * (e - self.vars.e_previous ) / delta_t
+
+            Xdd = P_control + I_control + D_control 
+
+            throttle_output = Xdd
+            brake_output    = 0 
             ######################################################
             ######################################################
             # MODULE 7: IMPLEMENTATION OF LATERAL CONTROLLER HERE
@@ -215,4 +226,5 @@ class Controller2D(object):
             in the next iteration)
         """
         self.vars.v_previous = v  # Store forward speed to be used in next step
-        self.vars.t_previous = t 
+        self.vars.t_previous = t
+        self.vars.e_previous = e
