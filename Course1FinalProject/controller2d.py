@@ -210,8 +210,8 @@ class Controller2D(object):
             # Change the steer output with the lateral controller. 
             # steer_output    = 0
              
-            k = 1 
-            ks = 1 
+            k = 0.3 
+            ks = 10 
 
             
             epsi_path = np.arctan2((np.array(waypoints) [-1,1] - np.array(waypoints) [0,1]),(np.array(waypoints)[-1,0] - np.array(waypoints)[0,0]))
