@@ -4,6 +4,8 @@
 2D Controller Class to be used for the CARLA waypoint follower demo.
 """
 
+from cmath import pi
+from math import atan2
 from tkinter import E
 from pygame import K_p
 import cutils
@@ -119,7 +121,7 @@ class Controller2D(object):
         self.vars.create_var('t_previous', 0.0)
         # self.vars.create_var('I', 0.0)
         self.vars.create_var('e_previous', 0.0)
-
+        self.vars.create_var('v_desired_prev',0.0)    
         kp = 1.5  
         ki = 1.5 
         kd = 0.2 
@@ -190,7 +192,7 @@ class Controller2D(object):
             
             D_control = kd * (e - self.vars.e_previous ) / delta_t
 
-            Xdd = P_control + I_control + D_control 
+            Xdd = P_control + I_control + D_control + ((v_desired - self.vars.v_desired_prev)/delta_t) 
 
             throttle_output = Xdd
             brake_output    = 0 
@@ -206,8 +208,34 @@ class Controller2D(object):
             """
             
             # Change the steer output with the lateral controller. 
-            steer_output    = 0
+            # steer_output    = 0
+             
+            k = 1 
+            ks = 1 
 
+            
+            epsi_path = np.arctan2((np.array(waypoints) [-1,1] - np.array(waypoints) [0,1]),(np.array(waypoints)[-1,0] - np.array(waypoints)[0,0]))
+            
+            Heading_error = epsi_path - yaw 
+
+            current_xy = np.array([x , y])
+
+            cross_track_error = np.min( np.linalg.norm(current_xy - np.array(waypoints)[:,:2], axis=1))
+            
+            print("The cross track error is = ")
+            print(cross_track_error)
+            cross_track_error_angle = np.arctan2(k * cross_track_error , ks + v)
+
+            steer_angle = Heading_error + cross_track_error_angle 
+
+            steer_output = steer_angle 
+
+            if steer_output > 1.22: 
+                steer_output = 1.22
+            if steer_output < -1.22:
+                steer_output = -1.22 
+            
+        
             ######################################################
             # SET CONTROLS OUTPUT
             ######################################################
@@ -228,3 +256,4 @@ class Controller2D(object):
         self.vars.v_previous = v  # Store forward speed to be used in next step
         self.vars.t_previous = t
         self.vars.e_previous = e
+        self.vars.v_desired_prev = v_desired
